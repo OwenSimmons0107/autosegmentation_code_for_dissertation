@@ -9,6 +9,8 @@ import argparse
 from torch.utils.tensorboard import SummaryWriter
 from itertools import cycle
 
+#this file contains various functions which are called and used elsewhere in the process
+
 def getFiles(targetdir):
     ls = []
     for fname in os.listdir(targetdir):

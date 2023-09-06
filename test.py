@@ -19,7 +19,7 @@ def setup_argparse():
     parser.add_argument("--image_dir", type=str, help="Path to the directory containing the images")
     parser.add_argument("--mask_dir", type=str, help="Path to the directory containing the masks")
     parser.add_argument("--model_dir", type=str, help="Path to the directory containing the model checkpoints and logs")
-    parser.add_argument("--fold_num", choices=[1,2,3,4,5], type=int, help="The fold number for the kfold cross validation")
+    parser.add_argument("--fold_num", choices=[1,2,3,4,5,0], default = 2, type=int, help="The fold number for the kfold cross validation")
     parser.add_argument("--deep_supervision", default=True, type=lambda x:bool(str2bool(x)), help="Use deep 3D UNet supervision?")
     global args
     args = parser.parse_args()
@@ -28,30 +28,9 @@ def main():
     # get args
     setup_argparse()
     global args
-    
     image_dir = args.image_dir
     mask_dir = args.mask_dir
-
-    # Set oar indices
-    # default
-    nClass = 6      # nClass:   0 - Background
-                    #           1 - w
-                    #           2 - x
-                    #           3 - y
-                    #           4 - z
-                    #           5 - z2
-
-    # Create the model
-    model = ResSegNet(nClass=nClass, deep_supervision=args.deep_supervision)
-
-    # put the model on GPU
-    device='cuda'
-    model.to(device)
-
-    # prepare the model
-    model.load_best(checkpoint_dir)
-    model.lock_layers()
-    model.eval()
+    model_dir = args.model_dir
 
     # choose the images to use in this training fold
     dataset_size = len(getFiles(image_dir))
@@ -61,8 +40,37 @@ def main():
 
     checkpoint_dir = join(args.model_dir, f"fold{args.fold_num}/")
 
+    # Set our indices
+    # default
+    nClass = 14     # nClass:   0 - Background
+                    #           1 - dentition
+                    #           2 - ethmoid
+                    #           3 - mandible_l
+                    #           4 - mandible_r
+                    #           5 - maxilla_l
+                    #           6 - maxilla_r
+                    #           7 - nasal_bone
+                    #           8 - orbit_l
+                    #           9 - orbit_r
+                    #           10 - sphenoid_l
+                    #           11 - sphenoid_r
+                    #           12 - tmj_l
+                    #           13 - tmj_r
+
+    # Create the model
+    model = ResSegNet(nClass=nClass, deep_supervision=False) #args.deep_supervision)
+
+    # put the model on GPU
+    device='cuda'
+    model.to(device)
+
+    # prepare the model
+    model.load_best(model_dir)
+    model.lock_layers()
+    model.eval()
+
     # Create data loaders
-    test_data = SegDataset3D(available_ims=test_fnames, imagedir=image_dir, maskdir=mask_dir)
+    test_data = SegDataset3D(available_ims=test_fnames, imagedir=image_dir, maskdir=mask_dir, one_hot_masks = False)
     test_loader = DataLoader(dataset=test_data, batch_size=1, shuffle=False, pin_memory=False, num_workers=0)
     
     # create output directory
@@ -72,7 +80,7 @@ def main():
     os.makedirs(out_dir, exist_ok=True)
     
     # run the testing
-    res = np.zeros(shape=(len(test_fnames), nClass-1, 2))
+    res = np.zeros(shape=(len(test_fnames), nClass-1, 3))
     for pat_idx, sample in enumerate(test_loader):
         image = sample['image']
         target_mask = sample['target_mask']
@@ -98,7 +106,7 @@ def main():
         '''
         You'll need to modify this bit with the spacing of the input images
         '''
-        spacing = [2.5, 1, 1] # this bit
+        spacing = [3.0, 1.50, 1.50] # this bit approximate spacing
         # Background (0) excluded:
         first_oar_idx = 1
         for organ_idx, organ_num in enumerate(range(first_oar_idx, target_mask.max()+1)):
@@ -116,9 +124,11 @@ def main():
             # compute desired metric
             hausdorff95 = deepmind_metrics.compute_robust_hausdorff(surface_distances, percent=95.)
             meanDTA = deepmind_metrics.compute_average_surface_distance(surface_distances)
+            DiceCoeff = deepmind_metrics.compute_dice_coefficient(gs.astype(bool), pred.astype(bool))
             # store result
             res[pat_idx, organ_idx, 0] = hausdorff95
             res[pat_idx, organ_idx, 1] = meanDTA
+            res[pat_idx, organ_idx, 2] = DiceCoeff
 
     np.save(os.path.join(out_dir, f'fold{args.fold_num}_results_vec.npy'), res)
     return

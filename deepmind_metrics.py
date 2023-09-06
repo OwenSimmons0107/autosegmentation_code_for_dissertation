@@ -2,6 +2,8 @@ import numpy as np
 import math
 from scipy import ndimage
 
+#this script contains functions to help test the model
+
 ENCODE_NEIGHBOURHOOD_3D_KERNEL = np.array([[[128, 64], [32, 16]], [[8, 4], [2, 1]]])
 # _NEIGHBOUR_CODE_TO_NORMALS is a lookup table.
 # For every binary neighbour code

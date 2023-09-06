@@ -13,6 +13,8 @@ from dataset import SegDataset3D
 import deepmind_metrics
 from scipy import ndimage
 
+#run this script to test model
+
 ## Add argparse
 def setup_argparse():
     parser = ap.ArgumentParser(prog="Main training program for 3D Segmentation with the deepmind data")

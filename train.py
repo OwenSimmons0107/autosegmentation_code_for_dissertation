@@ -13,13 +13,14 @@ from model import ResSegNet
 from utils import get_logger, get_number_of_learnable_parameters, str2bool, k_fold_split_train_val_test, getFiles, get_freq
 from dataset import SegDataset3D
 
+#run this code to test the model
 
 ## Add argparse
 def setup_argparse():
     parser = ap.ArgumentParser(prog="Main training program for 3D Segmentation with the deepmind data")
-    parser.add_argument("--image_dir", type=str, default="/home/owen/auto_segmentation_starter-1/processed_images_training/CTs", help="Path to the directory containing the images")
-    parser.add_argument("--mask_dir", type=str, default="/home/owen/auto_segmentation_starter-1/processed_images_training/Structures", help="Path to the directory containing the masks")
-    parser.add_argument("--output_dir", type=str, default="/home/owen/auto_segmentation_starter-1/output_dir2", help="Path to the directory to save the model checkpoints and logs")
+    parser.add_argument("--image_dir", type=str, help="Path to the directory containing the images")
+    parser.add_argument("--mask_dir", type=str, help="Path to the directory containing the masks")
+    parser.add_argument("--output_dir", type=str, help="Path to the directory to save the model checkpoints and logs")
     parser.add_argument("--fold_num", choices=[1,2,3,4,5,0], default=2, type=int, help="The fold number for the kfold cross validation")
     parser.add_argument("--deep_supervision", default=True, type=lambda x:bool(str2bool(x)), help="Use deep 3D UNet supervision?")
     global args
@@ -108,7 +109,6 @@ def main():
     # finally regenerate validation images for the best version of the model
     trainer._gen_best_val_images()
     
-    # Romeo Dunn
     return
 
 if __name__ == '__main__':

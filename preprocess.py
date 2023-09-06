@@ -6,7 +6,7 @@ from os.path import join
 from utils import getFiles
 
 
-
+#this script preprocesses CT images and combined masks to be used to train the model
 
 image_dir = ""
 mask_dir = ""

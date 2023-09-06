@@ -8,6 +8,8 @@ from utils import windowLevelNormalize
 from scipy.ndimage import zoom, rotate
 import torchio as tio
 
+#this code loads the images of the dataset into the model each epoch whilst applying augmentations to them
+
 class SegDataset3D(data.Dataset):
     def __init__(self, available_ims, imagedir, maskdir, geometric_transforms=False, misc_transforms=False, one_hot_masks=True, test=False):
         self.available_im_fnames = available_ims

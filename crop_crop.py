@@ -6,6 +6,8 @@ import SimpleITK as sitk
 import matplotlib.pyplot as plt
 import numpy as np
 
+#this code was used for cropping the images. Is not the the best so could be improved probably 
+
 patient =  'patient_file_name'
 
 # Read the CT volume
